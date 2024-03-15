@@ -41,10 +41,11 @@ fastify.get('/:shortUrl', async (request, reply) => {
 
 const start = async () => {
     try {
-        await fastify.listen({ port: 3000 });
-        console.log(`server listening on http://127.0.0.1:3000`);
+        const port = process.env.PORT || 3000; // Usa a porta do Render ou 3000 localmente
+        await fastify.listen(port, '0.0.0.0'); // Importante: ouça em '0.0.0.0' para aceitar conexões externas
+        fastify.log.info(`server listening on ${fastify.server.address().port}`);
     } catch (err) {
-        console.error(err);
+        fastify.log.error(err);
         process.exit(1);
     }
 };
