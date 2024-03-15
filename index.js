@@ -54,7 +54,7 @@ fastify.get('/clicks/:shortUrl', async (request, reply) => {
     const { data, error } = await supabase
         .from('links')
         .select('clicks')
-        .eq('short_url', `${baseUrlL}/${shortUrl}`)
+        .eq('short_url', `${baseUrl}/${shortUrl}`)
         .single();
 
     if (error || !data) return reply.status(404).send({ error: 'Link não encontrado.' });
