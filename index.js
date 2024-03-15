@@ -32,7 +32,7 @@ fastify.get('/:shortUrl', async (request, reply) => {
     const { data, error } = await supabase
         .from('links')
         .select('original_url')
-        .eq('short_url', `http://127.0.0.1:3000/${shortUrl}`)
+        .eq('short_url', `${baseUrl}/${shortUrl}`)
         .single();
 
     if (error || !data) return reply.status(404).send({ error: 'Link não encontrado.' });
