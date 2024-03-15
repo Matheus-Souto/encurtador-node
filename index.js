@@ -11,6 +11,7 @@ import { nanoid } from 'nanoid';
 // Rota para criar um link encurtado
 fastify.post('/shorten', async (request, reply) => {
     const { originalUrl } = request.body;
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     const shortUrl = `http://127.0.0.1:3000/${nanoid(7)}`; // Gera um ID curto
 
     const { data, error } = await supabase
