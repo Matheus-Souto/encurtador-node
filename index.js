@@ -8,12 +8,10 @@ const fastify = Fastify({ logger: true });
 import supabase from './supabaseClient.js';
 import { nanoid } from 'nanoid';
 
-const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-
 // Rota para criar um link encurtado
 fastify.post('/shorten', async (request, reply) => {
     const { originalUrl } = request.body;
-    const shortUrl = `${baseUrl}/${nanoid(7)}`; // Gera um ID curto
+    const shortUrl = `${process.env.BASE_URL}/${nanoid(7)}`; // Gera um ID curto
 
     const { data, error } = await supabase
         .from('links')
@@ -33,7 +31,7 @@ fastify.get('/:shortUrl', async (request, reply) => {
     const { data, error } = await supabase
         .from('links')
         .select('original_url')
-        .eq('short_url', `${baseUrl}/${shortUrl}`)
+        .eq('short_url', `${process.env.BASE_URL}/${shortUrl}`)
         .single();
 
     if (error || !data) return reply.status(404).send({ error: 'Link não encontrado.' });
@@ -43,7 +41,7 @@ fastify.get('/:shortUrl', async (request, reply) => {
     await supabase
         .from('links')
         .update({ clicks: updatedClicks })
-        .match({ short_url: `${baseUrl}/${shortUrl}` });
+        .match({ short_url: `${process.env.BASE_URL}/${shortUrl}` });
 
     // Redireciona para a URL original
     return reply.redirect(data.original_url);
@@ -55,7 +53,7 @@ fastify.get('/clicks/:shortUrl', async (request, reply) => {
     const { data, error } = await supabase
         .from('links')
         .select('clicks')
-        .eq('short_url', `${baseUrl}/${shortUrl}`)
+        .eq('short_url', `${process.env.BASE_URL}/${shortUrl}`)
         .single();
 
     if (error || !data) return reply.status(404).send({ error: 'Link não encontrado.' });
