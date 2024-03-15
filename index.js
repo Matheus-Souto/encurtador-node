@@ -37,7 +37,29 @@ fastify.get('/:shortUrl', async (request, reply) => {
 
     if (error || !data) return reply.status(404).send({ error: 'Link não encontrado.' });
 
+    // Incrementa o contador de cliques
+    const updatedClicks = data.clicks + 1;
+    await supabase
+        .from('links')
+        .update({ clicks: updatedClicks })
+        .match({ short_url: `${baseUrl}/${shortUrl}` });
+
+    // Redireciona para a URL original
     return reply.redirect(data.original_url);
+});
+
+// Rota para obter a contagem de cliques de um link encurtado
+fastify.get('/clicks/:shortUrl', async (request, reply) => {
+    const { shortUrl } = request.params;
+    const { data, error } = await supabase
+        .from('links')
+        .select('clicks')
+        .eq('short_url', `${baseUrlL}/${shortUrl}`)
+        .single();
+
+    if (error || !data) return reply.status(404).send({ error: 'Link não encontrado.' });
+
+    return reply.send({ clicks: data.clicks });
 });
 
 const start = async () => {
