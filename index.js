@@ -28,15 +28,22 @@ fastify.post('/shorten', async (request, reply) => {
 // Rota para redirecionar usando um link encurtado
 fastify.get('/:shortUrl', async (request, reply) => {
     const { shortUrl } = request.params;
-    const { data, error } = await supabase
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000'; // Fallback para localhost
+    const fullShortUrl = `${baseUrl}/${shortUrl}`;
+
+    // Recupera o link encurtado do banco de dados
+    const { data: linkData, error: linkError } = await supabase
         .from('links')
         .select('original_url, clicks, id')
-        .eq('short_url', `${process.env.BASE_URL}/${shortUrl}`)
+        .eq('short_url', fullShortUrl)
         .single();
 
-    if (linkError || !linkData) return reply.status(404).send({ error: 'Link não encontrado.' });
+    if (linkError || !linkData) {
+        console.error('Erro ao buscar o link:', linkError);
+        return reply.status(404).send({ error: 'Link não encontrado.' });
+    }
 
-    // Incrementa o contador de cliques
+    // Incrementa o contador de cliques de forma segura
     const { error: updateError } = await supabase
         .from('links')
         .update({ clicks: linkData.clicks + 1 })
@@ -48,8 +55,9 @@ fastify.get('/:shortUrl', async (request, reply) => {
     }
 
     // Redireciona para a URL original
-    return reply.redirect(data.original_url);
+    return reply.redirect(linkData.original_url);
 });
+
 
 // Rota para obter a contagem de cliques de um link encurtado
 fastify.get('/clicks/:shortUrl', async (request, reply) => {
