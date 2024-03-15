@@ -8,6 +8,47 @@ const fastify = Fastify({ logger: true });
 import supabase from './supabaseClient.js';
 import { nanoid } from 'nanoid';
 
+// Endpoint para registro de usuário
+fastify.post('/signup', async (request, reply) => {
+    const { email, password } = request.body;
+    const { user, session, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+  
+    if (error) return reply.status(400).send(error);
+    return { user, session };
+  });
+  
+  // Endpoint para login de usuário
+  fastify.post('/login', async (request, reply) => {
+    const { email, password } = request.body;
+    const { user, session, error } = await supabase.auth.signIn({
+      email,
+      password,
+    });
+  
+    if (error) return reply.status(400).send(error);
+    return { user, session };
+  });
+
+  fastify.addHook('onRequest', async (request, reply) => {
+    if (request.raw.url === '/login' || request.raw.url === '/signup') {
+      return; // Não verifica autenticação para login e signup
+    }
+  
+    const token = request.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return reply.status(401).send({ error: 'Token não fornecido.' });
+    }
+  
+    const { error } = await supabase.auth.api.getUser(token);
+  
+    if (error) {
+      return reply.status(401).send({ error: 'Não autorizado.' });
+    }
+  });
+
 // Rota para criar um link encurtado
 fastify.post('/shorten', async (request, reply) => {
     const { originalUrl } = request.body;
