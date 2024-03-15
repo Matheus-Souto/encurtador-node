@@ -30,18 +30,22 @@ fastify.get('/:shortUrl', async (request, reply) => {
     const { shortUrl } = request.params;
     const { data, error } = await supabase
         .from('links')
-        .select('original_url')
+        .select('original_url, clicks, id')
         .eq('short_url', `${process.env.BASE_URL}/${shortUrl}`)
         .single();
 
-    if (error || !data) return reply.status(404).send({ error: 'Link não encontrado.' });
+    if (linkError || !linkData) return reply.status(404).send({ error: 'Link não encontrado.' });
 
     // Incrementa o contador de cliques
-    const updatedClicks = data.clicks + 1;
-    await supabase
+    const { error: updateError } = await supabase
         .from('links')
-        .update({ clicks: updatedClicks })
-        .match({ short_url: `${process.env.BASE_URL}/${shortUrl}` });
+        .update({ clicks: linkData.clicks + 1 })
+        .match({ id: linkData.id });
+
+    if (updateError) {
+        console.error('Erro ao atualizar os cliques:', updateError);
+        return reply.status(500).send({ error: 'Erro ao atualizar os cliques.' });
+    }
 
     // Redireciona para a URL original
     return reply.redirect(data.original_url);
